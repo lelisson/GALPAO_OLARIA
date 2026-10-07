@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-"""Entrada na Streamlit Cloud (mesmo conteúdo que app.py)."""
+"""Entrada na Streamlit Cloud (equivale a: streamlit run app.py)."""
 
 from app import main
 

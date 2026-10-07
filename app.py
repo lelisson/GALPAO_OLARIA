@@ -238,15 +238,15 @@ def inject_css() -> None:
         border-radius: 6px; font-size: 0.72rem; font-weight: 600;
         background: rgba(0,180,255,0.12); color: {C_ACCENT}; letter-spacing: 0.04em;
     }}
-    .filtro-card {{
-        background: {C_CARD}; border: 1px solid {C_BORDER}; border-radius: 12px;
-        padding: 1rem 1.15rem 1.1rem; margin: 0 0 1rem 0;
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.filtro-card-root) {{
+        margin-bottom: 1rem !important;
     }}
-    .filtro-card .filtro-label {{
+    .filtro-card-root ~ * .filtro-label,
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.filtro-card-root) .filtro-label {{
         font-size: 0.88rem; text-transform: uppercase; letter-spacing: 0.1em;
         color: {C_TEXT}; font-weight: 700; margin-bottom: 0.55rem;
     }}
-    .filtro-card .filtro-hint {{
+    [data-testid="stVerticalBlockBorderWrapper"]:has(.filtro-card-root) .filtro-hint {{
         font-size: 0.82rem; color: {C_MUTED}; margin-bottom: 0.65rem;
     }}
     /* Linha Ano + Jan…Dez (pílulas de período) */
@@ -540,28 +540,36 @@ def main() -> None:
     todas_cats = sorted(set(CATEGORIAS_PADRAO + list(d["por_categoria_ano"].keys())))
     cats_sel = st.sidebar.multiselect("Filtrar categorias (opcional)", todas_cats, default=[])
 
-    st.markdown('<div class="filtro-card">', unsafe_allow_html=True)
-    st.markdown(
-        '<p class="filtro-hint">Selecione o <strong>ano</strong> e o <strong>mês</strong> (ou <strong>Ano</strong> para ver o total anual).</p>',
-        unsafe_allow_html=True,
-    )
-    fa, fm = st.columns([1.35, 10], gap="medium")
-    opcoes_mes = ["Ano", *MESES]
-    with fa:
-        st.markdown('<div class="filtro-label">Ano</div>', unsafe_allow_html=True)
-        st.pills("Ano", [ano], default=ano, key="filtro_ano", label_visibility="collapsed")
-    with fm:
-        st.markdown('<div class="filtro-label">Mês / período</div>', unsafe_allow_html=True)
-        sel_periodo = st.pills(
-            "Meses",
-            opcoes_mes,
-            default=MESES[mes_padrao],
-            key="filtro_mes",
-            label_visibility="collapsed",
+    with st.container(border=True):
+        st.markdown(
+            '<span class="filtro-card-root" aria-hidden="true"></span>'
+            '<p class="filtro-hint">Selecione o <strong>ano</strong> e o <strong>mês</strong> '
+            "(ou <strong>Ano</strong> para ver o total anual).</p>",
+            unsafe_allow_html=True,
         )
+        fa, fm = st.columns([1.35, 10], gap="medium")
+        opcoes_mes = ["Ano", *MESES]
+        with fa:
+            st.markdown('<p class="filtro-label">Ano</p>', unsafe_allow_html=True)
+            st.pills("Ano", [ano], default=ano, key="filtro_ano", label_visibility="collapsed")
+        with fm:
+            st.markdown('<p class="filtro-label">Mês / período</p>', unsafe_allow_html=True)
+            sel_periodo = st.pills(
+                "Meses",
+                opcoes_mes,
+                default=MESES[mes_padrao],
+                key="filtro_mes",
+                label_visibility="collapsed",
+            )
 
-    if not sel_periodo:
-        sel_periodo = MESES[mes_padrao]
+        if not sel_periodo:
+            sel_periodo = MESES[mes_padrao]
+
+        periodo_txt = f"Ano {ano}" if sel_periodo == "Ano" else f"{sel_periodo}/{ano}"
+        st.markdown(
+            f'<p class="periodo-banner">Período: {periodo_txt}</p>',
+            unsafe_allow_html=True,
+        )
 
     ver_ano_completo = sel_periodo == "Ano"
     if ver_ano_completo:
@@ -580,10 +588,6 @@ def main() -> None:
         mes_sel_chart = mes_destaque
 
     periodo_txt = f"Ano {ano}" if ver_ano_completo else f"{sel_periodo}/{ano}"
-    st.markdown(
-        f'<div class="periodo-banner">Período: {periodo_txt}</div></div>',
-        unsafe_allow_html=True,
-    )
 
     resultado_per = receita_per - despesa_per
     n_meses = len(idx)

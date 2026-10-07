@@ -6,7 +6,7 @@ textColor = "#E8EDF4"
 font = "Segoe UI"
 
 [server]
-headless = false
+headless = true
 
 [browser]
 gatherUsageStats = false
