@@ -17,10 +17,16 @@ ACORDAR = re.compile(r"get this app back up|wake", re.I)
 
 
 def app_no_ar(page) -> bool:
-    """Tela de login (Senha) ou o painel carregado em algum frame."""
+    """Login (senha), filtros De/Até, ou conteúdo típico do painel da Olaria."""
     for fr in page.frames:
         try:
-            if fr.locator('input[type="password"], input[aria-label="De"]').count():
+            if fr.locator('input[type="password"], input[aria-label="De"], input[aria-label="Senha"]').count():
+                return True
+            if fr.get_by_role("button", name=re.compile(r"Entrar|Atualizar", re.I)).count():
+                return True
+            if fr.locator("text=Galpão Olaria").count() or fr.locator("text=Painel Controle").count():
+                return True
+            if fr.locator('[data-testid="stAppViewContainer"]').count() and fr.locator("h1, h2, h3").count():
                 return True
         except Exception:
             continue
