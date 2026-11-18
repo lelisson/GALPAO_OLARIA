@@ -2,13 +2,12 @@
 
 on:
   schedule:
-    # Reserva; a corrente no fim do job garante visita a cada ~2 h.
-    - cron: "43 */3 * * *"
+    # A cada 2 h (fora de :00/:30, quando o GitHub mais atrasa).
+    - cron: "41 */2 * * *"
   workflow_dispatch:
 
 permissions:
   contents: read
-  actions: write
 
 concurrency:
   group: manter-ativo
@@ -19,8 +18,6 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - run: echo "INICIO=$(date +%s)" >> "$GITHUB_ENV"
-
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
@@ -34,12 +31,3 @@ jobs:
       - run: python scripts/manter_ativo.py
         env:
           STREAMLIT_APP_URL: ${{ secrets.STREAMLIT_APP_URL }}
-
-      - name: Agendar próxima visita (2 h)
-        if: ${{ !cancelled() }}
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          espera=$(( INICIO + 7200 - $(date +%s) ))
-          if [ "$espera" -gt 0 ]; then sleep "$espera"; fi
-          gh workflow run manter-ativo.yml --repo "$GITHUB_REPOSITORY" --ref main || true
