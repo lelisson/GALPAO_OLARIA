@@ -1,0 +1,45 @@
+﻿name: Manter painel ativo
+
+on:
+  schedule:
+    # Reserva; a corrente no fim do job garante visita a cada ~2 h.
+    - cron: "43 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: write
+
+concurrency:
+  group: manter-ativo
+  cancel-in-progress: true
+
+jobs:
+  visitar:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - run: echo "INICIO=$(date +%s)" >> "$GITHUB_ENV"
+
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - run: pip install playwright && python -m playwright install --with-deps chromium
+
+      - run: python scripts/manter_ativo.py
+        env:
+          STREAMLIT_APP_URL: ${{ secrets.STREAMLIT_APP_URL }}
+
+      - name: Agendar próxima visita (2 h)
+        if: ${{ !cancelled() }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          espera=$(( INICIO + 7200 - $(date +%s) ))
+          if [ "$espera" -gt 0 ]; then sleep "$espera"; fi
+          gh workflow run manter-ativo.yml --repo "$GITHUB_REPOSITORY" --ref main || true
