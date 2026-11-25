@@ -2,8 +2,8 @@
 
 on:
   schedule:
-    # A cada 2 h (fora de :00/:30, quando o GitHub mais atrasa).
-    - cron: "41 */2 * * *"
+    # Limite ToS: no máximo 1×/dia. Preferir UptimeRobot fora do Actions.
+    - cron: "50 14 * * *"
   workflow_dispatch:
 
 permissions:
